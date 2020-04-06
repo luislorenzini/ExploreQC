@@ -94,21 +94,15 @@ if bStructural
         end
         
         SubjDir = fullfile(AnalysisDir, Subject);
-        %if folder is not specified, folder is subject folder
-        if isempty(config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructFold')})
-            StructFold =SubjDir;
-        else
-            StructFold = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructFold')});
-        end
         
         % Checking images   %Temporary just for T1
         fprintf('Checking Structural Images \n')
         
-        T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructIm')});
-        c1T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'GMim')});
-        c2T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'WMim')});
-        c3T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'CSFim')});
-        yfile =  fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'Struct_Y_file')});
+        T1Path = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructIm')});
+        c1T1Path = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'GMim')});
+        c2T1Path = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'WMim')});
+        c3T1Path = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'CSFim')});
+        yfile =  fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'Struct_Y_file')});
         
         if ~exist(T1Path) || ~exist(c1T1Path) || ~exist(c2T1Path) || ~exist(c3T1Path)
             fprintf(['One or more structural image is missing for subject ' Subject ' ...Skipping structural QC, please check your data'])
@@ -120,7 +114,7 @@ if bStructural
         fprintf(['QCeing Structural images for ' Subject '\n'])
         
         % Noise Domain
-        NoisIT = xQC_Noise_IT(T1Path, c1T1Path, c2T1Path, StructFold, AtlasDir, x, yfile);
+        NoisIT = xQC_Noise_IT(T1Path, c1T1Path, c2T1Path, SubjDir, AtlasDir, x, yfile);
         
         if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Structural_Noise'),2}
             QC.(sSubject).Structural.Noise = NoisIT.Noise;
@@ -141,7 +135,7 @@ if bStructural
         
         % Inhomogeneity Domain
         if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Structural_Inhomogeneity'),2}
-            [BI_mean, BI_SD] = xQC_BiasIndex(StructFold, SPMDir, 'T1');
+            [BI_mean, BI_SD] = xQC_BiasIndex(SubjDir, SPMDir, 'T1');
             QC.(sSubject).Structural.Inhomogeneity.BI_mean = BI_mean;
             QC.(sSubject).Structural.Inhomogeneity.BI_SD = BI_SD;
             QA_Output = xASL_qc_CAT12_IQR(T1Path,  c1T1Path, c2T1Path, c3T1Path, []);
@@ -214,30 +208,18 @@ if bFunctional
         fprintf('Checking Functional Images \n')
         SubjDir = fullfile(AnalysisDir, Subject);
         
-        % Handle functional and structural folders
-        %Functional: if folder is not specified, folder is subject folder
+        %if folder is no
         if isemptyconfig.PE_properties{strcmp(config.ParameterExtractionModule, 'FuncFold')}
             FuncFold =SubjDir;
         else
             FuncFold = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'FuncFold')});
         end
-        %Structural if folder is not specified, folder is subject folder
-        if isempty(config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructFold')})
-            StructFold =SubjDir;
-        else
-            StructFold = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructFold')});
-        end
-        
-        
-        
-        
-        
         boldnii = fullfile(FuncFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'FuncIm')});
         GhostTemplate = fullfile(AtlasDir, 'GhostSignalRatio.nii');
-        c1T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'GMim')});
-        c2T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'WMim')});
-        c3T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'CSFim')});
-        yfile =  fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'Func_Y_file')});
+        c1T1Path = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'GMim')});
+        c2T1Path = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'WMim')});
+        c3T1Path = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'CSFim')});
+        yfile =  fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'Func_Y_file')});
         % Check if file exist
         if ~exist(boldnii) || ~exist(c1T1Path) || ~exist(c2T1Path) || ~exist(c3T1Path) || ~exist(yfile)
             fprintf(['One or more necessary images is missing for subject ' Subject ' ...Skipping Functional QC, please check your data'])
@@ -258,13 +240,13 @@ if bFunctional
         
         %Motion Domain
         if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Functional_Motion'),2}
-            NoisIT = xQC_Noise_IT(boldnii, c1T1Path, c2T1Path, StructFold, AtlasDir, x, yfile);
+            NoisIT = xQC_Noise_IT(boldnii, c1T1Path, c2T1Path, SubjDir, AtlasDir, x, yfile);
             
             QC.(sSubject).Functional.Motion = NoisIT.IT;
             
             QC.(sSubject).Functional.Motion.GhostToSignal = xQC_GhostToSignal(boldnii, GhostTemplate);
        
-            QC.(sSubject).Functional.Motion.GlobalCorrelation = xQC_Global_correlation(boldnii, c1T1Path, StructFold);
+            QC.(sSubject).Functional.Motion.GlobalCorrelation = xQC_Global_correlation(boldnii, c1T1Path, SubjDir);
         
             PathToMotion= fullfile(AnalysisDir, 'Population', 'MotionASL');
             
@@ -279,7 +261,7 @@ if bFunctional
         end
         
         
-        % Noise Domain
+        % TEMPORAL DOMAIN
         if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Functional_Noise'),2}
             %NoisIT = XQC_Noise_IT(boldnii, c1T1Path, c2T1Path, SubjDir, AtlasDir, x, yfile);
             %QC.(sSubject).Functional.Temporal.tSNR_GM_Ratio = NoisIT.Noise.SNR_GM_Ratio;
@@ -287,13 +269,13 @@ if bFunctional
             %For the moment we use xASL tSNRs which are more, discuss this
             %and decide whether xQC_Noise_IT is okay for functional
             %Reslice GM and WM to Nifti
-            xASL_spm_reslice(boldnii,c1T1Path , [], [], [], fullfile(StructFold, 'tmp_GM_mask.nii'), 0)
-            xASL_spm_reslice(boldnii,c2T1Path , [], [], [], fullfile(StructFold, 'tmp_WM_mask.nii'), 0)
+            xASL_spm_reslice(boldnii,c1T1Path , [], [], [], fullfile(SubjDir, 'tmp_GM_mask.nii'), 0)
+            xASL_spm_reslice(boldnii,c2T1Path , [], [], [], fullfile(SubjDir, 'tmp_WM_mask.nii'), 0)
             
-            tSNR = xASL_qc_temporalSNR(boldnii,{fullfile(StructFold, 'tmp_GM_mask.nii') fullfile(StructFold, 'tmp_WM_mask.nii')});
+            tSNR = xASL_qc_temporalSNR(boldnii,{fullfile(SubjDir, 'tmp_GM_mask.nii') fullfile(SubjDir, 'tmp_WM_mask.nii')});
             
-            xASL_delete(fullfile(StructFold, 'tmp_GM_mask.nii'))
-            xASL_delete(fullfile(StructFold, 'tmp_WM_mask.nii'))
+            xASL_delete(fullfile(SubjDir, 'tmp_GM_mask.nii'))
+            xASL_delete(fullfile(SubjDir, 'tmp_WM_mask.nii'))
             
             QC.(sSubject).Functional.Noise = tSNR;
            
@@ -365,24 +347,10 @@ if bFunctional
             fprintf('Checking Diffusion Images \n')
             % Setting Paths and Folders
             SubjDir = fullfile(AnalysisDir, Subject);
-            
-            % Handle Structural and Diffusion Folder
-            %if folder is not specified, folder is subject folder
-            if isempty(config.PE_properties{strcmp(config.ParameterExtractionModule, 'DiffFold')})
-                DWIdir =SubjDir;
-            else
-                DWIdir = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructFold')});
-            end
-            if isempty(config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructFold')})
-                StructFold =SubjDir;
-            else
-                StructFold = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructFold')});
-            end
-            
-            
-            c1T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'GMim')});
-            c2T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'WMim')});
-            c3T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'CSFim')});
+            DWIdir = fullfile(SubjDir, 'dwi');
+            c1T1Path = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'GMim')});
+            c2T1Path = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'WMim')});
+            c3T1Path = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'CSFim')});
             FApath = fullfile(DWIdir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'FAIm')});
             ADCpath = fullfile(DWIdir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'ADCIm')});
             TopUp_Path = fullfile(DWIdir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'dwi_TopUp_im')});
@@ -401,7 +369,7 @@ if bFunctional
             fprintf(['QCeing Diffusion Images for subject ' Subject '\n'])
             % Motion Domain
             if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Diffusion_Motion'),2}
-                [EddyQC] = xQC_dwi_EddyMotion(StructFold, Subject, c1T1Path, c2T1Path, c3T1Path, TopUp_Path);
+                [EddyQC] = xQC_dwi_EddyMotion(SubjDir, Subject, c1T1Path, c2T1Path, c3T1Path, TopUp_Path);
                 
                 QC.(sSubject).Diffusion.Motion = EddyQC.motion;
                 QC.(sSubject).Diffusion.Motion.Outlier_Perc = EddyQC.Outlier_Perc;
@@ -414,7 +382,7 @@ if bFunctional
             SSEpath = fullfile(DWIdir, 'DTIfit_sse.nii'); %This need to be changed with input from config file
            
             if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Diffusion_Noise'),2}
-                [Noise_mean , Noise_SD ] = xQC_dwi_Noise(StructFold, 'dwi_run-1_dwi.nii', 0 , 0) ; % don't save the noise image for now
+                [Noise_mean , Noise_SD ] = xQC_dwi_Noise(SubjDir, 'dwi_run-1_dwi.nii', 0 , 0) ; % don't save the noise image for now
                 
                 QC.(sSubject).Diffusion.Noise.Mean_Noise_dwi = Noise_mean;
                 
@@ -579,11 +547,7 @@ if bFunctional
 %     end
 %     
     writetable(QC_T,fullfile(AnalysisDir, 'QC.csv'));
-    writetable(QC_T,fullfile(fdir, 'xQC_Visualization_Tool', 'dataframes','QC.csv' )) % save it for the visualization
     %Here we must also save the file in the visualization toolbox folder
-    
-    
-    
 end
 
 
