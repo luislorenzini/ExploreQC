@@ -33,9 +33,9 @@ x = ExploreASL_Master('', 0);
 cd(fdir);
 
 % TEMPORARY : Add the path to scripts in development to test them
-addpath(fullfile(fdir,  'Development/mppca_denoise-master/mppca_denoise-master'))
-addpath(fullfile(fdir, 'Development/'))
-
+addpath(fullfile(fdir, 'xQC_Par_Extr_Tool', 'Development/mppca_denoise-master/mppca_denoise-master'))
+addpath(fullfile(fdir, 'xQC_Par_Extr_Tool', 'Development/'))
+addpath (fullfile(fdir, 'xQC_Par_Extr_Tool'))
 
 %Get the list of subject with subjRegExpl
 Subjects = xASL_adm_GetFsList(AnalysisDir, SubjRegExp, 1);
