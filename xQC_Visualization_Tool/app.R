@@ -105,8 +105,6 @@ ui <- fluidPage(
         
         uiOutput("inputUI")
         
-        
-        
       ),
       
       
@@ -246,15 +244,20 @@ server <- function(input, output, session) {
    scatter1 %>% layout(title = paste('Within-Site Distribution Site', input$site),
                        xaxis = list(title = 'Subjects' ,
                                     zeroline = FALSE),
-                       yaxis = list(title = input$QCpar, zeroline = FALSE ), showlegend = TRUE)
-   
+                       yaxis = list(title = input$QCpar, zeroline = FALSE ), showlegend = TRUE) 
+                       #shapes=list(type='line', 
+                                   #x0= 0, 
+                                   #x1=length(qc_data_all$patient), 
+                                   #y0 = mean(SiteData()[,input$QCpar]),
+                                   #y1=mean(SiteData()[,input$QCpar]), 
+                                   #line=list(dash='dot', width=1, color = "green")))
   })
-  
-  
   
   output$Text1 <- renderText({d <- event_data("plotly_click")$x
   })
 
+  
+  
   
   
   # Set image Path and Load Image based on PatientNum   #NEED TO BE DEPENDENT ON MODALITY
