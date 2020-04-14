@@ -237,9 +237,9 @@ if bFunctional
         c1T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'GMim')});
         c2T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'WMim')});
         c3T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'CSFim')});
-        yfile =  fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'Func_Y_file')});
+        yfile =  fullfile(FuncFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'Func_Y_file')});
         % Check if file exist
-        if ~exist(boldnii) || ~exist(c1T1Path) || ~exist(c2T1Path) || ~exist(c3T1Path) || ~exist(yfile)
+        if ~exist(boldnii, 'file') || ~exist(c1T1Path , 'file') || ~exist(c2T1Path, 'file') || ~exist(c3T1Path, 'file') || ~exist(yfile, 'file')
             fprintf(['One or more necessary images is missing for subject ' Subject ' ...Skipping Functional QC, please check your data'])
             
             QC = xQC_missing(QC, sSubject, 'Functional');
@@ -371,7 +371,7 @@ if bFunctional
             if isempty(config.PE_properties{strcmp(config.ParameterExtractionModule, 'DiffFold')})
                 DWIdir =SubjDir;
             else
-                DWIdir = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructFold')});
+                DWIdir = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'DiffFold')});
             end
             if isempty(config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructFold')})
                 StructFold =SubjDir;
