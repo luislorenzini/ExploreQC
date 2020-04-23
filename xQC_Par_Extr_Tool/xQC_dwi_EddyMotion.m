@@ -1,10 +1,10 @@
-function [EddyQC] = xQC_dwi_EddyMotion (subj_directory, subject, GMpath, WMpath, CSFpath, TopUp_Path )
+function [EddyQC] = xQC_dwi_EddyMotion (dwi_directory, subject, GMpath, WMpath, CSFpath, TopUp_Path )
 % xQC_dwi_Eddy compute QC parameters derived by Eddy Correction in Diffusion weighted images
 %
 % FORMAT: [EddyQC] = xASL_qc_dwi_EddyMotion (dwi_directory)
 %
 % INPUT:
-%   subj_directory                            - Path to the subject directory
+%   dwi_directory                            - Path to the subject DWI directory
 %   subject                                   - subject ID
 % OUTPUT:
 % EddyQC.motion.Average_x_translation_mm      - Average Volume to Volume motion on the X axis (in mm)
@@ -24,7 +24,6 @@ function [EddyQC] = xQC_dwi_EddyMotion (subj_directory, subject, GMpath, WMpath,
 % EXAMPLE: EddyQC = xASL_qc_dwi_Eddy ('/examplepath/DWIfolder/');
 
 % Set DWI directory
-dwi_directory = fullfile(subj_directory, 'dwi');
 
 %% Set Paths to NIfTIs and load images
 GMim = xASL_io_Nifti2Im(GMpath)>0.5;

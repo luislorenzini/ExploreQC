@@ -266,7 +266,11 @@ if bFunctional
        
             QC.(sSubject).Functional.Motion.GlobalCorrelation = xQC_Global_correlation(boldnii, c1T1Path, StructFold);
         
-            PathToMotion= fullfile(AnalysisDir, 'Population', 'MotionASL');
+            if isempty(config.PE_properties{strcmp(config.ParameterExtractionModule, 'PathToMotion')})
+                PathToMotion =FuncFold;
+            else
+                PathToMotion = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'PathToMotion')});
+            end
             
             Motion = xQC_Motion_Functional(PathToMotion, Subject);
             
@@ -401,7 +405,7 @@ if bFunctional
             fprintf(['QCeing Diffusion Images for subject ' Subject '\n'])
             % Motion Domain
             if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Diffusion_Motion'),2}
-                [EddyQC] = xQC_dwi_EddyMotion(StructFold, Subject, c1T1Path, c2T1Path, c3T1Path, TopUp_Path);
+                [EddyQC] = xQC_dwi_EddyMotion(DWIdir, Subject, c1T1Path, c2T1Path, c3T1Path, TopUp_Path);
                 
                 QC.(sSubject).Diffusion.Motion = EddyQC.motion;
                 QC.(sSubject).Diffusion.Motion.Outlier_Perc = EddyQC.Outlier_Perc;
@@ -411,7 +415,8 @@ if bFunctional
             end
             
             % Noise Domain
-            SSEpath = fullfile(DWIdir, 'DTIfit_sse.nii'); %This need to be changed with input from config file
+         
+            
            
             if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Diffusion_Noise'),2}
                 [Noise_mean , Noise_SD ] = xQC_dwi_Noise(StructFold, 'dwi_run-1_dwi.nii', 0 , 0) ; % don't save the noise image for now
@@ -419,8 +424,8 @@ if bFunctional
                 QC.(sSubject).Diffusion.Noise.Mean_Noise_dwi = Noise_mean;
                 
                 QC.(sSubject).Diffusion.Noise.SD_Noise_dwi = Noise_SD;
-                if exist(SSEpath, 'file')
-                    
+                if ~isempty(config.PE_properties{strcmp(config.ParameterExtractionModule, 'SSE_im')})
+                    SSEpath = fullfile(DWIdir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'SSE_im')});
                     SSE_WM_Mean = xQC_SSE_WM_mean(SSEpath, c2T1Path);            
                     QC.(sSubject).Diffusion.Noise.SSE_WM_Mean = SSE_WM_Mean;
                     
