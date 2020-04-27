@@ -1,16 +1,21 @@
 Welcome to ExploreQC's documentation!
 ======================================
 
+ExploreQC is a toolbox to perform MRI QC in multimodal an multicenter cohorts.
 
 
-Try subchapter  1
+Documentation
 ^^^^^^^^^^^^^^^^^
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   license
-   help
+   introduction
+   IFDs
+
+
+
+
 
 
 Indices and tables
