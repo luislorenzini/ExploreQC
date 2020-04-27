@@ -1,3 +1,4 @@
-Documentation of Explore QC
-Required Files 
-Prova Prova
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Getting started
