@@ -53,7 +53,7 @@ if (file.exists(file.path("dataframes", "QCed_data.csv"))) {
   qc_data_all$ASL = rep("Passed",nrow(qc_data_all)) 
   
   #this won't be needed later
-  qc_data_all[qc_data_all == 0] <- NA
+  #qc_data_all[qc_data_all == 0] <- NA
 }
 
 
@@ -67,7 +67,8 @@ if (file.exists(file.path("dataframes", "QCed_data.csv"))) {
 qc_data_all$Site <- as.factor(qc_data_all$Site)
 
 
-#qc_data_all$patient = qc_data_all$Subject
+#This should already be present in the dataframe, will be left out later
+qc_data_all$patient = qc_data_all$Subject
 
 
 
