@@ -19,8 +19,8 @@ if  exist(PathToSubjMotion,'file')
      % motion outliers
     Motion.MotionExcl_Perc     = xASL_round(MotionPars.PercExcl,3);
 else
-    Motion.MotionMean_mm       = NaN;
+    Motion.MotionMean_mm       = [NaN, NaN];
     Motion.MotionExcl_Perc     = NaN;
-    Motion.MotionMax_mm = NaN;
-    Motion.MotionSD_mm = NaN;
+    Motion.MotionMax_mm        = [NaN , NaN];
+    Motion.MotionSD_mm         = [NaN , NaN];
 end
