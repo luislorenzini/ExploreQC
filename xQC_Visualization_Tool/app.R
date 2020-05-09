@@ -44,7 +44,7 @@ if (file.exists(file.path("dataframes", "QCed_data.csv"))) {
 } else {
   qc_data_all = read.csv(file.path("dataframes", "QC.csv"))
   qc_data_all$Structural = rep("Passed",nrow(qc_data_all)) 
-  qc_data_all$Structural = as.character(qc_data_all$Structural)
+ # qc_data_all$Structural = as.character(qc_data_all$Structural)
   
   
   
