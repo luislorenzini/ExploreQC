@@ -273,7 +273,7 @@ server <- function(input, output, session) {
   observeEvent(Patientnum(), { 
       if (input$modality == 'Structural'){
         ImagePath <<- reactive({file.path(analysisdir, Patientnum(), T1image)})
-        im <<- reactive({oro.nifti::readNIfTI(ImagePath())})
+        im <<- reactive({oro.nifti::readNIfTI(ImagePath(), reorient = FALSE)})
       } else if (input$modality == 'Functional'){
         ImagePath <<- reactive({file.path(analysisdir, Patientnum(), FunctionalFold, FunctionalImage)})
         im <<- reactive({oro.nifti::readNIfTI(ImagePath(), reorient = FALSE) })
@@ -295,7 +295,7 @@ server <- function(input, output, session) {
     oro.nifti::slice(im(), z=input$sliceX)
   })
   onevent("mousewheel", "axial", {
-    updateSliderInput(session, "sliceX", value = (input$sliceX-10))
+    updateSliderInput(session, "sliceX", value = (input$sliceX-5))
   })
   #Sagittal
   output$sagittal <-renderPlot({
@@ -304,7 +304,7 @@ server <- function(input, output, session) {
     
   })
   onevent("mousewheel", "sagittal", {
-    updateSliderInput(session, "sliceY", value = input$sliceY-10)
+    updateSliderInput(session, "sliceY", value = input$sliceY-5)
   })
   #Coronal
   output$coronal <-renderPlot({
@@ -313,7 +313,7 @@ server <- function(input, output, session) {
     
   })
   onevent("mousewheel", "coronal", {
-    updateSliderInput(session, "sliceZ", value = input$sliceZ-10)
+    updateSliderInput(session, "sliceZ", value = input$sliceZ-5)
   })
   
   
