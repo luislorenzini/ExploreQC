@@ -505,7 +505,6 @@ if bFunctional
     save(fullfile(AnalysisDir, 'QC_backup.mat'), 'QC')
     
     %% Write CSV for R visualization Tool
-    % This needs to be fixed
     [list , QC_Parameters] = xQC_create_parameter_Table(configfile);
     QC_Parameters = ['Subject' 'Site' QC_Parameters];
     Subjects = fields(QC);
@@ -585,7 +584,6 @@ if bFunctional
 %     
     writetable(QC_T,fullfile(AnalysisDir, 'QC.csv'));
     writetable(QC_T,fullfile(fdir, 'xQC_Visualization_Tool', 'dataframes','QC.csv' )) % save it for the visualization
-    %Here we must also save the file in the visualization toolbox folder
     
     
     
