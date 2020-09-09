@@ -269,7 +269,7 @@ if bFunctional
             if isempty(config.PE_properties{strcmp(config.ParameterExtractionModule, 'PathToMotion')})
                 PathToMotion =FuncFold;
             else
-                PathToMotion = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'PathToMotion')});
+                PathToMotion = fullfile(config.PE_properties{strcmp(config.ParameterExtractionModule, 'PathToMotion')});
             end
             
             Motion = xQC_Motion_Functional(PathToMotion, Subject);
