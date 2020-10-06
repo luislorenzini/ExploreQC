@@ -22,6 +22,34 @@ library(wesanderson)
 library(plyr)
 library(openxlsx)
 library(plotly)
+library(dplyr)
+
+######### Functions ######### 
+#Define Function to find outliers
+isout <-  function(df){
+  
+  nums <- unlist(lapply(df, is.numeric))
+  dfofint <- df[, nums]
+  outliers = data.frame(matrix(NaN, nrow = nrow(dfofint), ncol = ncol(dfofint)))
+  colnames(outliers)<- colnames(df[, nums])
+  for (iobs in c(1:nrow(dfofint))) {
+    for (ivar in c(1:ncol(dfofint))){
+      if(is.na(dfofint[iobs, ivar])) {
+        outliers[iobs, ivar] = NaN
+      } else if (dfofint[iobs, ivar] >= (mean(dfofint[,ivar], na.rm = TRUE) + 1.96*sd(dfofint[,ivar], na.rm = TRUE))){
+        outliers[iobs, ivar] = 1
+      } else if (dfofint[iobs, ivar] <= (mean(dfofint[,ivar], na.rm = TRUE) - 1.96*sd(dfofint[,ivar], na.rm = TRUE))){
+        outliers[iobs, ivar] = 1
+      } else {
+        outliers[iobs, ivar] = 0
+      }
+    }
+  }
+  return(outliers)
+}
+
+##############
+
 #Read the Configuration File and set variables
 configuration = openxlsx::read.xlsx("../ConfigFile.xlsx", 1)
 
@@ -43,24 +71,63 @@ if (file.exists(file.path("dataframes", "QCed_data.csv"))) {
   print("One previous file has been found, starting from there. Delete the file to start over")
 } else {
   qc_data_all = read.csv(file.path("dataframes", "QC.csv"))
-  qc_data_all$Structural = rep("Passed",nrow(qc_data_all)) 
- # qc_data_all$Structural = as.character(qc_data_all$Structural)
   
+  #Subset based on variables you want to visualize (from configuration file)
+  includeparms = openxlsx::read.xlsx("../ConfigFile.xlsx", 3)
+  includeparms = includeparms[,c(1:3,5)]
+  includeparms  = includeparms[c(which(includeparms$Visualize == 1)),]
+  parmstoinclude = paste(includeparms$Scantype, includeparms$Domain, includeparms$Parameter, sep = '_')
+  parmstoinclude = c("Subject", "Site", parmstoinclude)
+  qc_data_all <- qc_data_all[, names(qc_data_all) %in% parmstoinclude]
   
-  
-  qc_data_all$Functional = rep("Passed",nrow(qc_data_all)) 
-  qc_data_all$Diffusion = rep("Passed",nrow(qc_data_all)) 
-  qc_data_all$ASL = rep("Passed",nrow(qc_data_all)) 
+  qc_data_all$Structural = rep("Good",nrow(qc_data_all)) 
+  qc_data_all$Functional = rep("Good",nrow(qc_data_all)) 
+  qc_data_all$Diffusion = rep("Good",nrow(qc_data_all)) 
+  qc_data_all$ASL = rep("Good",nrow(qc_data_all)) 
   
   #this won't be needed later
-  #qc_data_all[qc_data_all == 0] <- NA
+  qc_data_all[qc_data_all == 0] <- NaN
+
+  # If it's the first time we need to flag scans 
+  # Flag using defined function
+  for (isit in unique(qc_data_all$Site)){
+    sitdf <- qc_data_all[which(as.character(qc_data_all$Site) ==isit),]
+    sitoutliers <- isout(sitdf)
+    for (isub in c(1:nrow(sitdf))){
+      
+      # structural 
+      xS = sum(sitoutliers[isub,startsWith(colnames(sitoutliers), 'Structural')], na.rm = TRUE)
+      if (between(xS, 2, 3)){ # 1 or 2 outliers
+        sitdf$Structural[isub] <- "Questionable"
+      } else if (xS > 3){
+        sitdf$Structural[isub] <- "Bad"
+      }
+      
+      # functional 
+      xF = sum(sitoutliers[isub,startsWith(colnames(sitoutliers), 'Functional')], na.rm = TRUE)
+      if (between(xF, 2, 3)){ # 1 or 2 outliers
+        sitdf$Functional[isub] <- "Questionable"
+      } else if (xF > 3){
+        sitdf$Functional[isub] <- "Bad"
+      }
+      
+      # DTI
+      xD = sum(sitoutliers[isub,startsWith(colnames(sitoutliers), 'Diffusion')], na.rm = TRUE)
+      if (between(xD, 2, 3)){ # 1 or 2 outliers
+        sitdf$Diffusion[isub] <- "Questionable"
+      } else if (xD > 3){
+        sitdf$Diffusion[isub] <- "Bad"
+      }
+      
+    }
+    
+    # Put the results in the main dataframe 
+    qc_data_all[which(as.character(qc_data_all$Site) ==isit),'Structural'] <- sitdf$Structural
+    qc_data_all[which(as.character(qc_data_all$Site) ==isit),'Functional'] <- sitdf$Functional
+    qc_data_all[which(as.character(qc_data_all$Site) ==isit),'Diffusion'] <- sitdf$Diffusion
+    
+  }
 }
-
-
-
-
-
-
 
 
 #Manage Site and patient name, This is temporary since is specific for EPAD study
@@ -72,6 +139,8 @@ qc_data_all$patient = qc_data_all$Subject
 
 
 
+
+####################
 
 # Create variable with number of scan per site to 
 for (i in 1:nrow(qc_data_all)) {
@@ -218,7 +287,7 @@ server <- function(input, output, session) {
   
   
   ##   VISUALIZATION  ##
-  pal <- c("red", "green")
+  pal <- c("red", "green" ,"yellow")
   #Violin Plots for Between sites distributions
   output$violinplot <- renderPlotly({
     violin <- plot_ly(qc_dataTH(),
@@ -261,7 +330,7 @@ server <- function(input, output, session) {
   
   
   
-  # Set image Path and Load Image based on PatientNum   #NEED TO BE DEPENDENT ON MODALITY
+  # Set image Path and Load Image based on PatientNum   
   
   Patientnum <- reactive({event_data("plotly_click")$x})
   
@@ -328,16 +397,20 @@ server <- function(input, output, session) {
   # This is a piece of code that respond to the clicking of CONFIRM botton and:
   observeEvent(input$update,{  
     # 1. Save the output (Pass/Fail) in the qc_data_all dataframe in the column called as the modality
-    if (input$include == "Pass") {
-      qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] <<-"Passed"
+    if (input$include == "Good") {
+      qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] <<-"Good"
       #SiteData()[which(SiteData()$qc_data_all.patient == Patientnum()),input$modality]<<-"Passed"
       #SiteData()$include[which(SiteData()$patient == Patientnum()),]<-1
       
-    }  else if (input$include == "Fail"){
-      qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] <<- "Failed"
+    }  else if (input$include == "Bad"){
+      qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] <<- "Bad"
       #SiteData()[which(SiteData()$qc_data_all.patient == Patientnum()),input$modality]<<-"Passed"
       
       
+    } else if (input$include == "Questionable"){
+      qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] <<- "Questionable"
+      #SiteData()[which(SiteData()$qc_data_all.patient == Patientnum()),input$modality]<<-"Passed"
+
     }
     
 
@@ -363,21 +436,30 @@ server <- function(input, output, session) {
   #(if you already excluded the subject the gui wil appear with the Fail option selected) 
   output$mygui = renderUI({
     if (is.null(Patientnum)) return(NULL)
-    if (qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] == "Failed"){
+    if (qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] == "Bad"){
       tagList(
         (radioButtons("include", 
-                      label = "Does the scan pass the QC?",
-                      choices = c("Pass", "Fail"),
-                      selected = "Fail",
+                      label = "How do you judge the Scan's quality?",
+                      choices = c("Good","Questionable", "Bad"),
+                      selected = "Bad",
                       inline = TRUE
         )),
         (actionButton("update", "Confirm")))
-    } else if (qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] == "Passed") {
+    } else if (qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] == "Good") {
       tagList(
         (radioButtons("include", 
-                      label = "Does the scan pass the QC?",
-                      choices = c("Pass", "Fail"),
-                      selected = "Pass",
+                      label = "How do you judge the Scan's quality?",
+                      choices = c("Good","Questionable", "Bad"),
+                      selected = "Good",
+                      inline = TRUE
+        )),
+        (actionButton("update", "Confirm")))
+    } else if (qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] == "Questionable") {
+      tagList(
+        (radioButtons("include", 
+                      label = "How do you judge the Scan's quality?",
+                      choices = c("Good","Questionable", "Bad"),
+                      selected = "Questionable",
                       inline = TRUE
         )),
         (actionButton("update", "Confirm")))
