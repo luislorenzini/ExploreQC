@@ -1,17 +1,15 @@
-function QC = xQC_missing(QC,sSubject,modality)
+function QC = xQC_missing(QC,sSubject,modality, configfile)
 
 
-[~,txt,~] = xlsread('ParameterList.xlsx') ;
-list = txt; 
+list = readtable(configfile, 'Sheet', 'ParameterSheet');
+list(list.Visualize == 1, :);
 
-ModIndex = strcmp(list(:,1), modality);
 
-ModList = list(ModIndex,:);
-
-for iPar = 1:length(ModList)
+for iPar = 1:height(list)
     
-    QC.(sSubject).(ModList{iPar,1}).(ModList{iPar,2}).(ModList{iPar,3})= NaN;
-
+    if strcmp(list.Scantype{iPar},modality) 
+    QC.(sSubject).(list.Scantype{iPar}).(list.Domain{iPar}).(list.Parameter{iPar})= NaN;
+    end
 end 
 
 

@@ -101,7 +101,7 @@ if bStructural
             StructFold = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructFold')});
         end
         
-        % Checking images   %Temporary just for T1
+        % Checking images   
         fprintf('Checking Structural Images \n')
         
         T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructIm')});
@@ -174,9 +174,6 @@ if bStructural
             
         end
         
-        %missing for now
-        %ICVs = xASL_qc_CollectQC_Structural (x, iSubject)  % How to integrate this???????
-        %xASL_qc_TanimotoCoeff(T1Im, Template) % still need to create templates
         
         
     end
@@ -242,7 +239,7 @@ if bFunctional
         if ~exist(boldnii, 'file') || ~exist(c1T1Path , 'file') || ~exist(c2T1Path, 'file') || ~exist(c3T1Path, 'file') || ~exist(yfile, 'file')
             fprintf(['One or more necessary images is missing for subject ' Subject ' ...Skipping Functional QC, please check your data'])
             
-            QC = xQC_missing(QC, sSubject, 'Functional');
+            QC = xQC_missing(QC, sSubject, 'Functional', configfile);
             
             continue
         end
@@ -513,12 +510,12 @@ if bFunctional
     QC_T = array2table(zeros(length(Subjects),(length(QC_Parameters))), 'VariableNames', QC_Parameters);
     QC_T.Subject = Subjects;
     
-    %TO BE TESTED
+
     for iSubject = 1:length(Subjects)
         Subj = QC_T.Subject{iSubject};
         subjori = Subj(2:end); % Take the original name of the subject, we added an s for the struct
-        QC_T.Site(iSubject)= string(regexp(subjori, SiteRegExp, 'Match'));
-        % Extract Site ith regular expression from configuration
+        QC_T.Site(iSubject)= string(regexp(subjori, SiteRegExp, 'Match'));  % Extract Site ith regular expression from configuration
+       
         for iPar = 1:height(list)
             if list.Visualize(iPar) %just if include
                 st= list.Scantype{iPar};
