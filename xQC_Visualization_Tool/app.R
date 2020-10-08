@@ -98,25 +98,25 @@ if (file.exists(file.path("dataframes", "QCed_data.csv"))) {
       # structural 
       xS = sum(sitoutliers[isub,startsWith(colnames(sitoutliers), 'Structural')], na.rm = TRUE)
       if (between(xS, 2, 3)){ # 1 or 2 outliers
-        sitdf$Structural[isub] <- "Questionable"
+        sitdf$Structural[isub] <- "Moderate"
       } else if (xS > 3){
-        sitdf$Structural[isub] <- "Bad"
+        sitdf$Structural[isub] <- "Poor"
       }
       
       # functional 
       xF = sum(sitoutliers[isub,startsWith(colnames(sitoutliers), 'Functional')], na.rm = TRUE)
       if (between(xF, 2, 3)){ # 1 or 2 outliers
-        sitdf$Functional[isub] <- "Questionable"
+        sitdf$Functional[isub] <- "Moderate"
       } else if (xF > 3){
-        sitdf$Functional[isub] <- "Bad"
+        sitdf$Functional[isub] <- "Poor"
       }
       
       # DTI
       xD = sum(sitoutliers[isub,startsWith(colnames(sitoutliers), 'Diffusion')], na.rm = TRUE)
       if (between(xD, 2, 3)){ # 1 or 2 outliers
-        sitdf$Diffusion[isub] <- "Questionable"
+        sitdf$Diffusion[isub] <- "Moderate"
       } else if (xD > 3){
-        sitdf$Diffusion[isub] <- "Bad"
+        sitdf$Diffusion[isub] <- "Poor"
       }
       
     }
@@ -245,10 +245,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   ## ADMINISTRATION  ##
-  #column with include/exclude result for specific modality
-  #includecolumn = reactive({qc_data_all[,]})
-  
-  #qc_data --> dataframe with only parameters from selected modality, and other columns(site..)
+  # select columns based on inputs
   qc_data <- reactive({
     data.frame(qc_data_all[,which(startsWith(colnames(qc_data_all), input$modality))], 
                qc_data_all$Site, 
@@ -287,7 +284,7 @@ server <- function(input, output, session) {
   
   
   ##   VISUALIZATION  ##
-  pal <- c("red", "green" ,"yellow")
+  pal <- c("green", "yellow" ,"red")
   #Violin Plots for Between sites distributions
   output$violinplot <- renderPlotly({
     violin <- plot_ly(qc_dataTH(),
@@ -402,13 +399,13 @@ server <- function(input, output, session) {
       #SiteData()[which(SiteData()$qc_data_all.patient == Patientnum()),input$modality]<<-"Passed"
       #SiteData()$include[which(SiteData()$patient == Patientnum()),]<-1
       
-    }  else if (input$include == "Bad"){
-      qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] <<- "Bad"
+    }  else if (input$include == "Poor"){
+      qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] <<- "Poor"
       #SiteData()[which(SiteData()$qc_data_all.patient == Patientnum()),input$modality]<<-"Passed"
       
       
-    } else if (input$include == "Questionable"){
-      qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] <<- "Questionable"
+    } else if (input$include == "Moderate"){
+      qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] <<- "Moderate"
       #SiteData()[which(SiteData()$qc_data_all.patient == Patientnum()),input$modality]<<-"Passed"
 
     }
@@ -436,12 +433,12 @@ server <- function(input, output, session) {
   #(if you already excluded the subject the gui wil appear with the Fail option selected) 
   output$mygui = renderUI({
     if (is.null(Patientnum)) return(NULL)
-    if (qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] == "Bad"){
+    if (qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] == "Poor"){
       tagList(
         (radioButtons("include", 
                       label = "How do you judge the Scan's quality?",
-                      choices = c("Good","Questionable", "Bad"),
-                      selected = "Bad",
+                      choices = c("Good","Moderate", "Poor"),
+                      selected = "Poor",
                       inline = TRUE
         )),
         (actionButton("update", "Confirm")))
@@ -449,17 +446,17 @@ server <- function(input, output, session) {
       tagList(
         (radioButtons("include", 
                       label = "How do you judge the Scan's quality?",
-                      choices = c("Good","Questionable", "Bad"),
+                      choices = c("Good","Moderate", "Poor"),
                       selected = "Good",
                       inline = TRUE
         )),
         (actionButton("update", "Confirm")))
-    } else if (qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] == "Questionable") {
+    } else if (qc_data_all[which(qc_data_all$patient == Patientnum()),input$modality] == "Moderate") {
       tagList(
         (radioButtons("include", 
                       label = "How do you judge the Scan's quality?",
-                      choices = c("Good","Questionable", "Bad"),
-                      selected = "Questionable",
+                      choices = c("Good","Moderate", "Poor"),
+                      selected = "Moderate",
                       inline = TRUE
         )),
         (actionButton("update", "Confirm")))
