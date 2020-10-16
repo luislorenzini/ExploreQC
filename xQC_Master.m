@@ -113,7 +113,7 @@ if bStructural
         if ~exist(T1Path) || ~exist(c1T1Path) || ~exist(c2T1Path) || ~exist(c3T1Path)
             fprintf(['One or more structural image is missing for subject ' Subject ' ...Skipping structural QC, please check your data'])
             
-            QC = xQC_missing(QC, sSubject, 'Structural');
+            QC = xQC_missing(QC, sSubject, 'Structural', configfile);
             continue
         end
         
@@ -394,7 +394,7 @@ if bFunctional
             if ~exist(FApath, 'file') ||~exist(ADCpath, 'file') || ~exist(DWIdir, 'dir') || ~exist(c1T1Path, 'file') || ~exist(c2T1Path, 'file') || ~exist(c3T1Path, 'file') || ~exist(TopUp_Path, 'file')
                 
                 fprintf(['One or more necessary files not found for subject ' Subject 'skipping' ])
-                QC = xQC_missing(QC, sSubject, 'Diffusion');
+                QC = xQC_missing(QC, sSubject, 'Diffusion', configfile);
                 
                 continue
             end
