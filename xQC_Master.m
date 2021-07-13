@@ -225,10 +225,7 @@ if bFunctional
             StructFold = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructFold')});
         end
         
-        
-        
-        
-        
+   
         boldnii = fullfile(FuncFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'FuncIm')});
         GhostTemplate = fullfile(AtlasDir, 'GhostSignalRatio.nii');
         c1T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'GMim')});
@@ -391,7 +388,7 @@ if bFunctional
             %Check for the existence of these files that are necessary for the
             %analysis
             
-            if ~exist(FApath, 'file') ||~exist(ADCpath, 'file') || ~exist(DWIdir, 'dir') || ~exist(c1T1Path, 'file') || ~exist(c2T1Path, 'file') || ~exist(c3T1Path, 'file') || ~exist(TopUp_Path, 'file')
+            if ~exist(FApath, 'file') || ~exist(DWIdir, 'dir') || ~exist(c1T1Path, 'file') || ~exist(c2T1Path, 'file') || ~exist(c3T1Path, 'file') || ~exist(TopUp_Path, 'file')
                 
                 fprintf(['One or more necessary files not found for subject ' Subject 'skipping' ])
                 QC = xQC_missing(QC, sSubject, 'Diffusion', configfile);
@@ -457,27 +454,28 @@ if bFunctional
                 end
                 
                 % ADC Descriptives
-                ADC_Descriptives = xQC_Descriptives(ADCpath, 0, c1T1Path, c2T1Path, c3T1Path);
-                
-                filedDescriptives = fields(ADC_Descriptives);
-                for iSeg = 1:length(filedDescriptives)
-                    Seg = filedDescriptives{iSeg};
+                if exist(ADCpath, 'file')
+                    ADC_Descriptives = xQC_Descriptives(ADCpath, 0, c1T1Path, c2T1Path, c3T1Path);
                     
-                    if isstruct(ADC_Descriptives.(Seg))
-                        Statistics = fields(ADC_Descriptives.(Seg));
-                        for iStat = 1: length(Statistics)
-                            S = Statistics{iStat};
-                            
-                            ThisStat = ['ADC_' Seg '_' S];
-                            QC.(sSubject).Diffusion.Descriptives.(ThisStat) = ADC_Descriptives.(Seg).(S);
-                        end
-                    else
-                        QC.(sSubject).Diffusion.Descriptives.(Seg) = ADC_Descriptives.(Seg);
+                    filedDescriptives = fields(ADC_Descriptives);
+                    for iSeg = 1:length(filedDescriptives)
+                        Seg = filedDescriptives{iSeg};
                         
+                        if isstruct(ADC_Descriptives.(Seg))
+                            Statistics = fields(ADC_Descriptives.(Seg));
+                            for iStat = 1: length(Statistics)
+                                S = Statistics{iStat};
+                                
+                                ThisStat = ['ADC_' Seg '_' S];
+                                QC.(sSubject).Diffusion.Descriptives.(ThisStat) = ADC_Descriptives.(Seg).(S);
+                            end
+                        else
+                            QC.(sSubject).Diffusion.Descriptives.(Seg) = ADC_Descriptives.(Seg);
+                            
+                        end
                     end
+                    
                 end
-                
-                
                 
             end
             
@@ -504,14 +502,14 @@ if bFunctional
     %% Write CSV for R visualization Tool
     [list , QC_Parameters] = xQC_create_parameter_Table(configfile);
     QC_Parameters = ['Subject' 'Site' QC_Parameters];
-    Subjects = fields(QC);
+    SubjectNames = fields(QC);
    
     
-    QC_T = array2table(zeros(length(Subjects),(length(QC_Parameters))), 'VariableNames', QC_Parameters);
-    QC_T.Subject = Subjects;
+    QC_T = array2table(zeros(length(SubjectNames),(length(QC_Parameters))), 'VariableNames', QC_Parameters);
+    QC_T.Subject = SubjectNames;
     
 
-    for iSubject = 1:length(Subjects)
+    for iSubject = 1:length(SubjectNames)
         Subj = QC_T.Subject{iSubject};
         subjori = Subj(2:end); % Take the original name of the subject, we added an s for the struct
         QC_T.Site(iSubject)= string(regexp(subjori, SiteRegExp, 'Match'));  % Extract Site ith regular expression from configuration
