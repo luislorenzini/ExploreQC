@@ -101,7 +101,7 @@ if bStructural
             StructFold = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructFold')});
         end
         
-        % Checking images   
+        % Checking images
         fprintf('Checking Structural Images \n')
         
         T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructIm')});
@@ -117,65 +117,70 @@ if bStructural
             continue
         end
         
-        fprintf(['QCeing Structural images for ' Subject '\n'])
-        
-        % Noise Domain
-        NoisIT = xQC_Noise_IT(T1Path, c1T1Path, c2T1Path, StructFold, AtlasDir, x, yfile);
-        
-        if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Structural_Noise'),2}
-            QC.(sSubject).Structural.Noise = NoisIT.Noise;
-            QC.(sSubject).Structural.Noise.CJV = xQC_CJV(T1Path, c1T1Path, c2T1Path);
-        end
-        
-        if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Structural_Motion'),2} %motion in T1 is extracte with Information theory measures
-            QC.(sSubject).Structural.Motion = NoisIT.IT;
-        end
-        
-        
-        %Asymmetry Domain
-        if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Structural_Asymmetry'),2}
-            QC.(sSubject).Structural.Asymmetry.AI_perc = xQC_AsymmetryIndex(T1Path);
-        end
-        
-       
-        
-        % Inhomogeneity Domain
-        if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Structural_Inhomogeneity'),2}
-            [BI_mean, BI_SD] = xQC_BiasIndex(StructFold, SPMDir, 'T1');
-            QC.(sSubject).Structural.Inhomogeneity.BI_mean = BI_mean;
-            QC.(sSubject).Structural.Inhomogeneity.BI_SD = BI_SD;
-            QA_Output = xASL_qc_CAT12_IQR(T1Path,  c1T1Path, c2T1Path, c3T1Path, []);
-            QC.(sSubject).Structural.Inhomogeneity.IQR = QA_Output.IQR;
-        end
-        
-        % Descriptives Domain
-        if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Structural_Descriptives'),2}
-            Descriptives_str = xQC_Descriptives(T1Path, 1,  c1T1Path, c2T1Path, c3T1Path);
+        try % try to run the QC
+            fprintf(['QCeing Structural images for ' Subject '\n'])
             
-            %Handle dimension of struct
+            % Noise Domain
+            NoisIT = xQC_Noise_IT(T1Path, c1T1Path, c2T1Path, StructFold, AtlasDir, x, yfile);
             
-            filedDescriptives = fields(Descriptives_str);
-            for iSeg = 1:length(filedDescriptives)
-                Seg = filedDescriptives{iSeg};
-                
-                if isstruct(Descriptives_str.(Seg))
-                    Statistics = fields(Descriptives_str.(Seg));
-                    for iStat = 1: length(Statistics)
-                        S = Statistics{iStat};
-                        
-                        ThisStat = [Seg '_' S];
-                        QC.(sSubject).Structural.Descriptives.(ThisStat) = Descriptives_str.(Seg).(S);
-                    end
-                else
-                    QC.(sSubject).Structural.Descriptives.(Seg) = Descriptives_str.(Seg);
-                    
-                end
+            if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Structural_Noise'),2}
+                QC.(sSubject).Structural.Noise = NoisIT.Noise;
+                QC.(sSubject).Structural.Noise.CJV = xQC_CJV(T1Path, c1T1Path, c2T1Path);
             end
             
+            if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Structural_Motion'),2} %motion in T1 is extracte with Information theory measures
+                QC.(sSubject).Structural.Motion = NoisIT.IT;
+            end
+            
+            
+            %Asymmetry Domain
+            if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Structural_Asymmetry'),2}
+                QC.(sSubject).Structural.Asymmetry.AI_perc = xQC_AsymmetryIndex(T1Path);
+            end
+            
+            
+            
+            % Inhomogeneity Domain
+            if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Structural_Inhomogeneity'),2}
+                [BI_mean, BI_SD] = xQC_BiasIndex(StructFold, SPMDir, 'T1');
+                QC.(sSubject).Structural.Inhomogeneity.BI_mean = BI_mean;
+                QC.(sSubject).Structural.Inhomogeneity.BI_SD = BI_SD;
+                QA_Output = xASL_qc_CAT12_IQR(T1Path,  c1T1Path, c2T1Path, c3T1Path, []);
+                QC.(sSubject).Structural.Inhomogeneity.IQR = QA_Output.IQR;
+            end
+            
+            % Descriptives Domain
+            if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Structural_Descriptives'),2}
+                Descriptives_str = xQC_Descriptives(T1Path, 1,  c1T1Path, c2T1Path, c3T1Path);
+                
+                %Handle dimension of struct
+                
+                filedDescriptives = fields(Descriptives_str);
+                for iSeg = 1:length(filedDescriptives)
+                    Seg = filedDescriptives{iSeg};
+                    
+                    if isstruct(Descriptives_str.(Seg))
+                        Statistics = fields(Descriptives_str.(Seg));
+                        for iStat = 1: length(Statistics)
+                            S = Statistics{iStat};
+                            
+                            ThisStat = [Seg '_' S];
+                            QC.(sSubject).Structural.Descriptives.(ThisStat) = Descriptives_str.(Seg).(S);
+                        end
+                    else
+                        QC.(sSubject).Structural.Descriptives.(Seg) = Descriptives_str.(Seg);
+                        
+                    end
+                end
+                
+            end
+            
+            
+        catch % if something went wrong
+            
+            QC = xQC_missing(QC, sSubject, 'Structural', configfile);
+            
         end
-        
-        
-        
     end
 end
 
@@ -225,7 +230,7 @@ if bFunctional
             StructFold = fullfile(SubjDir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructFold')});
         end
         
-   
+        
         boldnii = fullfile(FuncFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'FuncIm')});
         GhostTemplate = fullfile(AtlasDir, 'GhostSignalRatio.nii');
         c1T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'GMim')});
@@ -241,93 +246,97 @@ if bFunctional
             continue
         end
         
-        fprintf(['QCeing Functional Images for Subject' Subject '\n'])
-        
-        nii4D     = xASL_io_Nifti2Im(boldnii);
-        
-        if size(nii4D,4)<6
-            fprintf(['Functional Image of subject ' Subject ' has less than 6 volumes ...skipping'])
-            continue
-        end
-        
-        %Motion Domain
-        if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Functional_Motion'),2}
-            NoisIT = xQC_Noise_IT(boldnii, c1T1Path, c2T1Path, StructFold, AtlasDir, x, yfile);
+        try
+            fprintf(['QCeing Functional Images for Subject' Subject '\n'])
             
-            QC.(sSubject).Functional.Motion = NoisIT.IT;
+            nii4D     = xASL_io_Nifti2Im(boldnii);
             
-            QC.(sSubject).Functional.Motion.GhostToSignal = xQC_GhostToSignal(boldnii, GhostTemplate);
-       
-            QC.(sSubject).Functional.Motion.GlobalCorrelation = xQC_Global_correlation(boldnii, c1T1Path, StructFold);
-        
-            if isempty(config.PE_properties{strcmp(config.ParameterExtractionModule, 'PathToMotion')})
-                PathToMotion =FuncFold;
-            else
-                PathToMotion = fullfile(config.PE_properties{strcmp(config.ParameterExtractionModule, 'PathToMotion')});
+            if size(nii4D,4)<6
+                fprintf(['Functional Image of subject ' Subject ' has less than 6 volumes ...skipping'])
+                continue
             end
             
-            Motion = xQC_Motion_Functional(PathToMotion, Subject);
-            
-            % Take the second value output of xQC_Motion_Functional
-            QC.(sSubject).Functional.Motion.MotionMean_mm = Motion.MotionMean_mm(2);
-            QC.(sSubject).Functional.Motion.MotionSD_mm = Motion.MotionSD_mm(2);
-            QC.(sSubject).Functional.Motion.MotionMax_mm = Motion.MotionMax_mm(2);
-            QC.(sSubject).Functional.Motion.MotionExcl_Perc = Motion.MotionExcl_Perc;
-        
-        end
-        
-        
-        % Noise Domain
-        if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Functional_Noise'),2}
-            %NoisIT = XQC_Noise_IT(boldnii, c1T1Path, c2T1Path, SubjDir, AtlasDir, x, yfile);
-            %QC.(sSubject).Functional.Temporal.tSNR_GM_Ratio = NoisIT.Noise.SNR_GM_Ratio;
-            %QC.(sSubject).Functional.Temporal.CNR_GM_WM_ratio = NoisIT.Noise.CNR_GM_WM_Ratio;
-            %For the moment we use xASL tSNRs which are more, discuss this
-            %and decide whether xQC_Noise_IT is okay for functional
-            %Reslice GM and WM to Nifti
-            xASL_spm_reslice(boldnii,c1T1Path , [], [], [], fullfile(StructFold, 'tmp_GM_mask.nii'), 0)
-            xASL_spm_reslice(boldnii,c2T1Path , [], [], [], fullfile(StructFold, 'tmp_WM_mask.nii'), 0)
-            
-            tSNR = xASL_qc_temporalSNR(boldnii,{fullfile(StructFold, 'tmp_GM_mask.nii') fullfile(StructFold, 'tmp_WM_mask.nii')});
-            
-            xASL_delete(fullfile(StructFold, 'tmp_GM_mask.nii'))
-            xASL_delete(fullfile(StructFold, 'tmp_WM_mask.nii'))
-            
-            QC.(sSubject).Functional.Noise = tSNR;
-           
-        end
-        
+            %Motion Domain
+            if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Functional_Motion'),2}
+                NoisIT = xQC_Noise_IT(boldnii, c1T1Path, c2T1Path, StructFold, AtlasDir, x, yfile);
                 
-        % SUMMARY STATISTIC
-        % Descriptives  Descriptives = QC.(sSubject).Structural.Descriptives
-        if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Functional_Descriptives'),2}
-            Descriptives_fun = xQC_Descriptives(boldnii, 0,  c1T1Path, c2T1Path, c3T1Path);
-            
-            
-            %Handle dimension of Descriptives
-            
-            filedDescriptives = fields(Descriptives_fun);
-            for iSeg = 1:length(filedDescriptives)
-                Seg = filedDescriptives{iSeg};
+                QC.(sSubject).Functional.Motion = NoisIT.IT;
                 
-                if isstruct(Descriptives_fun.(Seg))
-                    Statistics = fields(Descriptives_fun.(Seg));
-                    for iStat = 1: length(Statistics)
-                        S = Statistics{iStat};
-                        
-                        ThisStat = [Seg '_' S];
-                        QC.(sSubject).Functional.Descriptives.(ThisStat) = Descriptives_fun.(Seg).(S);
-                    end
+                QC.(sSubject).Functional.Motion.GhostToSignal = xQC_GhostToSignal(boldnii, GhostTemplate);
+                
+                QC.(sSubject).Functional.Motion.GlobalCorrelation = xQC_Global_correlation(boldnii, c1T1Path, StructFold);
+                
+                if isempty(config.PE_properties{strcmp(config.ParameterExtractionModule, 'PathToMotion')})
+                    PathToMotion =FuncFold;
                 else
-                    QC.(sSubject).Functional.Descriptives.(Seg) = Descriptives_fun.(Seg);
-                    
+                    PathToMotion = fullfile(config.PE_properties{strcmp(config.ParameterExtractionModule, 'PathToMotion')});
                 end
+                
+                Motion = xQC_Motion_Functional(PathToMotion, Subject);
+                
+                % Take the second value output of xQC_Motion_Functional
+                QC.(sSubject).Functional.Motion.MotionMean_mm = Motion.MotionMean_mm(2);
+                QC.(sSubject).Functional.Motion.MotionSD_mm = Motion.MotionSD_mm(2);
+                QC.(sSubject).Functional.Motion.MotionMax_mm = Motion.MotionMax_mm(2);
+                QC.(sSubject).Functional.Motion.MotionExcl_Perc = Motion.MotionExcl_Perc;
+                
             end
             
             
+            % Noise Domain
+            if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Functional_Noise'),2}
+                %NoisIT = XQC_Noise_IT(boldnii, c1T1Path, c2T1Path, SubjDir, AtlasDir, x, yfile);
+                %QC.(sSubject).Functional.Temporal.tSNR_GM_Ratio = NoisIT.Noise.SNR_GM_Ratio;
+                %QC.(sSubject).Functional.Temporal.CNR_GM_WM_ratio = NoisIT.Noise.CNR_GM_WM_Ratio;
+                %For the moment we use xASL tSNRs which are more, discuss this
+                %and decide whether xQC_Noise_IT is okay for functional
+                %Reslice GM and WM to Nifti
+                xASL_spm_reslice(boldnii,c1T1Path , [], [], [], fullfile(StructFold, 'tmp_GM_mask.nii'), 0)
+                xASL_spm_reslice(boldnii,c2T1Path , [], [], [], fullfile(StructFold, 'tmp_WM_mask.nii'), 0)
+                
+                tSNR = xASL_qc_temporalSNR(boldnii,{fullfile(StructFold, 'tmp_GM_mask.nii') fullfile(StructFold, 'tmp_WM_mask.nii')});
+                
+                xASL_delete(fullfile(StructFold, 'tmp_GM_mask.nii'))
+                xASL_delete(fullfile(StructFold, 'tmp_WM_mask.nii'))
+                
+                QC.(sSubject).Functional.Noise = tSNR;
+                
+            end
+            
+            
+            % SUMMARY STATISTIC
+            % Descriptives  Descriptives = QC.(sSubject).Structural.Descriptives
+            if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Functional_Descriptives'),2}
+                Descriptives_fun = xQC_Descriptives(boldnii, 0,  c1T1Path, c2T1Path, c3T1Path);
+                
+                
+                %Handle dimension of Descriptives
+                
+                filedDescriptives = fields(Descriptives_fun);
+                for iSeg = 1:length(filedDescriptives)
+                    Seg = filedDescriptives{iSeg};
+                    
+                    if isstruct(Descriptives_fun.(Seg))
+                        Statistics = fields(Descriptives_fun.(Seg));
+                        for iStat = 1: length(Statistics)
+                            S = Statistics{iStat};
+                            
+                            ThisStat = [Seg '_' S];
+                            QC.(sSubject).Functional.Descriptives.(ThisStat) = Descriptives_fun.(Seg).(S);
+                        end
+                    else
+                        QC.(sSubject).Functional.Descriptives.(Seg) = Descriptives_fun.(Seg);
+                        
+                    end
+                end
+                
+                
+            end
+            
+            
+        catch % if something went wrong
+            QC = xQC_missing(QC, sSubject, 'Functional', configfile);
         end
-        
-        
         
         
     end
@@ -396,93 +405,98 @@ if bFunctional
                 continue
             end
             
-            fprintf(['QCeing Diffusion Images for subject ' Subject '\n'])
-            % Motion Domain
-            if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Diffusion_Motion'),2}
-                [EddyQC] = xQC_dwi_EddyMotion(DWIdir, Subject, c1T1Path, c2T1Path, c3T1Path, TopUp_Path);
-                
-                QC.(sSubject).Diffusion.Motion = EddyQC.motion;
-                QC.(sSubject).Diffusion.Motion.Outlier_Perc = EddyQC.Outlier_Perc;
-                QC.(sSubject).Diffusion.Motion.Induced_Distortion = EddyQC.Induced_Distortion;
-                QC.(sSubject).Diffusion.Motion.Susc_Induced_Distortion = EddyQC.Susc_Induced_Distortion;
-                
-            end
-            
-            % Noise Domain
-         
-            
-           
-            if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Diffusion_Noise'),2}
-                [Noise_mean , Noise_SD ] = xQC_dwi_Noise(StructFold, 'dwi_run-1_dwi.nii', 0 , 0) ; % don't save the noise image for now
-                
-                QC.(sSubject).Diffusion.Noise.Mean_Noise_dwi = Noise_mean;
-                
-                QC.(sSubject).Diffusion.Noise.SD_Noise_dwi = Noise_SD;
-                if ~isempty(config.PE_properties{strcmp(config.ParameterExtractionModule, 'SSE_im')})
-                    SSEpath = fullfile(DWIdir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'SSE_im')});
-                    SSE_WM_Mean = xQC_SSE_WM_mean(SSEpath, c2T1Path);            
-                    QC.(sSubject).Diffusion.Noise.SSE_WM_Mean = SSE_WM_Mean;
+            try
+                fprintf(['QCeing Diffusion Images for subject ' Subject '\n'])
+                % Motion Domain
+                if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Diffusion_Motion'),2}
+                    [EddyQC] = xQC_dwi_EddyMotion(DWIdir, Subject, c1T1Path, c2T1Path, c3T1Path, TopUp_Path);
                     
-                end            
-            
-            
-            end
-            
-            % DERIVATIVES % Descriptives %
-            if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Diffusion_Descriptives'),2}
-                QC.(sSubject).Diffusion.Descriptives.FA_Outliers_mL = xASL_qc_FA_Outliers(FApath);
-                
-                % FA Descriptives
-                FA_Descriptives = xQC_Descriptives(FApath, 0, c1T1Path, c2T1Path, c3T1Path);
-                
-                filedDescriptives = fields(FA_Descriptives);
-                for iSeg = 1:length(filedDescriptives)
-                    Seg = filedDescriptives{iSeg};
+                    QC.(sSubject).Diffusion.Motion = EddyQC.motion;
+                    QC.(sSubject).Diffusion.Motion.Outlier_Perc = EddyQC.Outlier_Perc;
+                    QC.(sSubject).Diffusion.Motion.Induced_Distortion = EddyQC.Induced_Distortion;
+                    QC.(sSubject).Diffusion.Motion.Susc_Induced_Distortion = EddyQC.Susc_Induced_Distortion;
                     
-                    if isstruct(FA_Descriptives.(Seg))
-                        Statistics = fields(FA_Descriptives.(Seg));
-                        for iStat = 1: length(Statistics)
-                            S = Statistics{iStat};
-                            
-                            ThisStat = ['FA_' Seg '_' S];
-                            QC.(sSubject).Diffusion.Descriptives.(ThisStat) = FA_Descriptives.(Seg).(S);
-                        end
-                    else
-                        QC.(sSubject).Diffusion.Descriptives.(Seg) = FA_Descriptives.(Seg);
-                        
-                    end
                 end
                 
-                % ADC Descriptives
-                if exist(ADCpath, 'file')
-                    ADC_Descriptives = xQC_Descriptives(ADCpath, 0, c1T1Path, c2T1Path, c3T1Path);
+                % Noise Domain
+                
+                
+                
+                if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Diffusion_Noise'),2}
+                    [Noise_mean , Noise_SD ] = xQC_dwi_Noise(StructFold, 'dwi_run-1_dwi.nii', 0 , 0) ; % don't save the noise image for now
                     
-                    filedDescriptives = fields(ADC_Descriptives);
+                    QC.(sSubject).Diffusion.Noise.Mean_Noise_dwi = Noise_mean;
+                    
+                    QC.(sSubject).Diffusion.Noise.SD_Noise_dwi = Noise_SD;
+                    if ~isempty(config.PE_properties{strcmp(config.ParameterExtractionModule, 'SSE_im')})
+                        SSEpath = fullfile(DWIdir, config.PE_properties{strcmp(config.ParameterExtractionModule, 'SSE_im')});
+                        SSE_WM_Mean = xQC_SSE_WM_mean(SSEpath, c2T1Path);
+                        QC.(sSubject).Diffusion.Noise.SSE_WM_Mean = SSE_WM_Mean;
+                        
+                    end
+                    
+                    
+                end
+                
+                % DERIVATIVES % Descriptives %
+                if domainconfig{strcmp(domainconfig.ScanType_Domain, 'Diffusion_Descriptives'),2}
+                    QC.(sSubject).Diffusion.Descriptives.FA_Outliers_mL = xASL_qc_FA_Outliers(FApath);
+                    
+                    % FA Descriptives
+                    FA_Descriptives = xQC_Descriptives(FApath, 0, c1T1Path, c2T1Path, c3T1Path);
+                    
+                    filedDescriptives = fields(FA_Descriptives);
                     for iSeg = 1:length(filedDescriptives)
                         Seg = filedDescriptives{iSeg};
                         
-                        if isstruct(ADC_Descriptives.(Seg))
-                            Statistics = fields(ADC_Descriptives.(Seg));
+                        if isstruct(FA_Descriptives.(Seg))
+                            Statistics = fields(FA_Descriptives.(Seg));
                             for iStat = 1: length(Statistics)
                                 S = Statistics{iStat};
                                 
-                                ThisStat = ['ADC_' Seg '_' S];
-                                QC.(sSubject).Diffusion.Descriptives.(ThisStat) = ADC_Descriptives.(Seg).(S);
+                                ThisStat = ['FA_' Seg '_' S];
+                                QC.(sSubject).Diffusion.Descriptives.(ThisStat) = FA_Descriptives.(Seg).(S);
                             end
                         else
-                            QC.(sSubject).Diffusion.Descriptives.(Seg) = ADC_Descriptives.(Seg);
+                            QC.(sSubject).Diffusion.Descriptives.(Seg) = FA_Descriptives.(Seg);
                             
                         end
                     end
                     
+                    % ADC Descriptives
+                    if exist(ADCpath, 'file')
+                        ADC_Descriptives = xQC_Descriptives(ADCpath, 0, c1T1Path, c2T1Path, c3T1Path);
+                        
+                        filedDescriptives = fields(ADC_Descriptives);
+                        for iSeg = 1:length(filedDescriptives)
+                            Seg = filedDescriptives{iSeg};
+                            
+                            if isstruct(ADC_Descriptives.(Seg))
+                                Statistics = fields(ADC_Descriptives.(Seg));
+                                for iStat = 1: length(Statistics)
+                                    S = Statistics{iStat};
+                                    
+                                    ThisStat = ['ADC_' Seg '_' S];
+                                    QC.(sSubject).Diffusion.Descriptives.(ThisStat) = ADC_Descriptives.(Seg).(S);
+                                end
+                            else
+                                QC.(sSubject).Diffusion.Descriptives.(Seg) = ADC_Descriptives.(Seg);
+                                
+                            end
+                        end
+                        
+                    end
+                    
                 end
                 
+                
+                
+                
+                
+            catch % if something went wrong
+                QC = xQC_missing(QC, sSubject, 'Diffusion', configfile);
+
             end
-            
-            
-            
-            
-            
             
         end
         
@@ -503,17 +517,17 @@ if bFunctional
     [list , QC_Parameters] = xQC_create_parameter_Table(configfile);
     QC_Parameters = ['Subject' 'Site' QC_Parameters];
     SubjectNames = fields(QC);
-   
+    
     
     QC_T = array2table(zeros(length(SubjectNames),(length(QC_Parameters))), 'VariableNames', QC_Parameters);
     QC_T.Subject = SubjectNames;
     
-
+    
     for iSubject = 1:length(SubjectNames)
         Subj = QC_T.Subject{iSubject};
         subjori = Subj(2:end); % Take the original name of the subject, we added an s for the struct
         QC_T.Site(iSubject)= string(regexp(subjori, SiteRegExp, 'Match'));  % Extract Site ith regular expression from configuration
-       
+        
         for iPar = 1:height(list)
             if list.Visualize(iPar) %just if include
                 st= list.Scantype{iPar};
@@ -532,51 +546,51 @@ if bFunctional
         QC_T.Subject(iSubject) = {subjori};
     end
     
-       
-       
-        
-        
-        
-        
-%     for iSubject = 1:length(Subjects)
-%         
-%         Subj = QC_T.Subject{iSubject};
-%         
-%         Modalities=fields(QC.(Subj));
-%         
-%         for iModality = 1:length(Modalities)
-%             
-%             Mod = Modalities{iModality};
-%             
-%             if isfield(QC.(Subj), Mod)
-%                 
-%                 Domains = fields(QC.(Subj).(Mod));
-%                 for iDomain = 1:length(Domains)
-%                     Dom = Domains{iDomain};
-%                     
-%                     if isfield(QC.(Subj).(Mod), Dom)
-%                         
-%                         Parameters = fields(QC.(Subj).(Mod).(Dom));
-%                         
-%                         for iParameter = 1: length(Parameters)
-%                             
-%                             Par = Parameters{iParameter};
-%                             
-%                             if isfield(QC.(Subj).(Mod).(Dom), Par)
-%                                 
-%                                 ThisPar =[Mod '_' Dom '_' Par];
-%                                 
-%                                 QC_T.(ThisPar)(iSubject) = QC.(Subj).(Mod).(Dom).(Par);
-%                                 
-%                                 
-%                             end
-%                         end
-%                     end
-%                 end
-%             end
-%         end
-%     end
-%     
+    
+    
+    
+    
+    
+    
+    %     for iSubject = 1:length(Subjects)
+    %
+    %         Subj = QC_T.Subject{iSubject};
+    %
+    %         Modalities=fields(QC.(Subj));
+    %
+    %         for iModality = 1:length(Modalities)
+    %
+    %             Mod = Modalities{iModality};
+    %
+    %             if isfield(QC.(Subj), Mod)
+    %
+    %                 Domains = fields(QC.(Subj).(Mod));
+    %                 for iDomain = 1:length(Domains)
+    %                     Dom = Domains{iDomain};
+    %
+    %                     if isfield(QC.(Subj).(Mod), Dom)
+    %
+    %                         Parameters = fields(QC.(Subj).(Mod).(Dom));
+    %
+    %                         for iParameter = 1: length(Parameters)
+    %
+    %                             Par = Parameters{iParameter};
+    %
+    %                             if isfield(QC.(Subj).(Mod).(Dom), Par)
+    %
+    %                                 ThisPar =[Mod '_' Dom '_' Par];
+    %
+    %                                 QC_T.(ThisPar)(iSubject) = QC.(Subj).(Mod).(Dom).(Par);
+    %
+    %
+    %                             end
+    %                         end
+    %                     end
+    %                 end
+    %             end
+    %         end
+    %     end
+    %
     writetable(QC_T,fullfile(AnalysisDir, 'QC.csv'));
     writetable(QC_T,fullfile(fdir, 'xQC_Visualization_Tool', 'dataframes','QC.csv' )) % save it for the visualization
     
