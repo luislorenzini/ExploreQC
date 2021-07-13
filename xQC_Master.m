@@ -104,7 +104,16 @@ if bStructural
         % Checking images   
         fprintf('Checking Structural Images \n')
         
-        T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructIm')});
+        % If you havent put any file names, we just look for something for
+        % a NiFTI file containing 'T1'
+        if isempty (config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructIm')})
+            T1path = xASL_adm_GetFileList(StructFold, '^.+T1.+nii.+');
+        else 
+            T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'StructIm')});
+        end 
+        % ADD: Handle 2 or more runs
+        % ADD : 
+        % Here, if the field is empty we have to compute the segmentation
         c1T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'GMim')});
         c2T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'WMim')});
         c3T1Path = fullfile(StructFold, config.PE_properties{strcmp(config.ParameterExtractionModule, 'CSFim')});

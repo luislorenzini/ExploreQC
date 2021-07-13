@@ -25,7 +25,7 @@ library(plotly)
 library(dplyr)
 
 ######### Functions ######### 
-#Define Function to find outliers
+#Find outliers
 isout <-  function(df){
   
   nums <- unlist(lapply(df, is.numeric))
@@ -46,6 +46,26 @@ isout <-  function(df){
     }
   }
   return(outliers)
+}
+
+#Compute Z scores
+isz <-  function(df){
+  
+  nums <- unlist(lapply(df, is.numeric))
+  dfofint <- df[, nums]
+  zed = data.frame(matrix(NaN, nrow = nrow(dfofint), ncol = ncol(dfofint)))
+  colnames(zed)<- colnames(df[, nums])
+  for (iobs in c(1:nrow(dfofint))) {
+    for (ivar in c(1:ncol(dfofint))){
+      if(is.na(dfofint[iobs, ivar])) {
+        zed[iobs, ivar] = NaN
+      } else{
+        zed[iobs, ivar] = (dfofint[iobs, ivar]- mean(dfofint[, ivar]))/sd(dfofint[, ivar])
+      
+      }
+    }
+  }
+  return(zed)
 }
 
 ##############
@@ -87,25 +107,34 @@ if (file.exists(file.path("dataframes", "QCed_data.csv"))) {
   
   #this won't be needed later
   qc_data_all[qc_data_all == 0] <- NaN
-
+  
+  # numbers of outliers and zscores
+  qc_data_all$n_struct_outliers <- 0
+  qc_data_all$z_score_struct <- 0
+  
   # If it's the first time we need to flag scans 
   # Flag using defined function
   for (isit in unique(qc_data_all$Site)){
     sitdf <- qc_data_all[which(as.character(qc_data_all$Site) ==isit),]
     sitoutliers <- isout(sitdf)
+    sitezed <- isz(sitdf)
     for (isub in c(1:nrow(sitdf))){
       
       # structural 
       xS = sum(sitoutliers[isub,startsWith(colnames(sitoutliers), 'Structural')], na.rm = TRUE)
-      if (between(xS, 2, 3)){ # 1 or 2 outliers
+      if (between(xS, 2, 3)){ # 2 or 3 outliers
         sitdf$Structural[isub] <- "Moderate"
       } else if (xS > 3){
         sitdf$Structural[isub] <- "Poor"
       }
       
+      # save the total number of structural outliers for that subject
+      sitdf$n_struct_outliers[isub] <- xS 
+      sitdf$z_score_struct[isub] <- sum(abs(sitezed[isub, startsWith(colnames(sitoutliers), 'Structural')]))
+      
       # functional 
       xF = sum(sitoutliers[isub,startsWith(colnames(sitoutliers), 'Functional')], na.rm = TRUE)
-      if (between(xF, 2, 3)){ # 1 or 2 outliers
+      if (between(xF, 2, 3)){ # 2 or 3 outliers
         sitdf$Functional[isub] <- "Moderate"
       } else if (xF > 3){
         sitdf$Functional[isub] <- "Poor"
@@ -123,6 +152,9 @@ if (file.exists(file.path("dataframes", "QCed_data.csv"))) {
     
     # Put the results in the main dataframe 
     qc_data_all[which(as.character(qc_data_all$Site) ==isit),'Structural'] <- sitdf$Structural
+    qc_data_all[which(as.character(qc_data_all$Site) ==isit),'n_struct_outliers'] <- sitdf$n_struct_outliers
+    qc_data_all[which(as.character(qc_data_all$Site) ==isit),'z_score_struct'] <- sitdf$z_score_struct
+    
     qc_data_all[which(as.character(qc_data_all$Site) ==isit),'Functional'] <- sitdf$Functional
     qc_data_all[which(as.character(qc_data_all$Site) ==isit),'Diffusion'] <- sitdf$Diffusion
     
