@@ -1,6 +1,6 @@
 # ExploreQC
 ExploreQC toolbox for QC of MRI data in multicenter and multimodal cohorts
-
+**This Branch is currently being developed, codes may change depending on users/developers inputs**
 Companion code of Lorenzini et al. "The European Prevention of Alzheimer’s Dementia (EPAD) Neuroimaging Dataset and Processing Workflow", detailing the methodological implementation for the processing and QC of MRI scans in the EPAD cohort. 
 
 This set of scripts is specifically thought to be used for replicating the semi-automated QC strategy demonstrated in the paper to: 
